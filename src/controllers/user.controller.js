@@ -445,7 +445,67 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
 })
 
 
+// watch history pipeline
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+// 1st pipeline to get the object ID from mongodb, 
+// NOTE: mongose converts the object_id into string at the backend , else we have to convert it by ourself that we have done in this. 
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+// 2nd pipeline : to find watch history
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+//sub-pipeline:  futher pipeline added to extract the exact value
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            //  sub- sub pipline
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullName: 1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+// optimization step for front end
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        // 3rd pipeline
+    ])
 
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch History fetched successfully"
+        )
+    )
+})
 
 // Export files
 export {
@@ -458,5 +518,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
