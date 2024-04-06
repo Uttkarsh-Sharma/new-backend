@@ -56,7 +56,7 @@ router.route("/update-account").patch(verifyJWT,updateAccountDetails)
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 
 // REVIEW: CoverImage Update
-router.route("/cover-image").patch(verifyJWT, upload.single("/coverImage"),updateUserCoverImage)
+router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"),updateUserCoverImage)
 
 // REVIEW : Channel profile , Since it is url and params is used thus /c/: is used here. 
 router.route("/c/:username").get(verifyJWT,getUserChannelProfile)
